@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  mongo-init:
+    runs-on: ubuntu-latest
+    services:
+      image: mango
+      ports: ['27017:27017']
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Start MongoDB service
+        run: |
+          until nc -z localhost 27017; do
+            echo "Waiting for MongoDB to start..."
+            sleep 2
+          done
+            echo "MongoDB started"
+
+      - name: Seed MongoDB
+        working-directory: ./backend
+        run: | 
+          npm install
+          node seedTasksData.js
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: npm test
